@@ -77,7 +77,7 @@ $conn->close();
     <?php include 'view_cart.php'; ?>
 </div>
 
-<!-- Credit Card form with validatin for valid data -->
+<!-- Credit Card form with validation for valid data -->
 <div class="container-credit-card">
     <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" id="creditcardform" class="creditcard">
         <label for="cardName">Card Name Holder:</label>
@@ -187,7 +187,6 @@ $conn->close();
             $password = "";
             $dbname = "e-shop";
 
-
             $conn = new mysqli($servername, $username, $password, $dbname);
             if ($conn->connect_error) {
                 die("Connection failed: " . $conn->connect_error);
@@ -205,6 +204,51 @@ $conn->close();
                 $query = "SELECT CardNumber, ExpirationMonth, ExpirationYear, CVV FROM creditcarddetails WHERE USER_ID = $userId";
                 $result = $conn->query($query);
 
+            // // Check if the user has a shopping cart
+            // $cartValidationQuery = "SELECT CART_ID FROM shoppingcarts WHERE USER_ID = $userId";
+            // $validationResult = $conn->query($cartValidationQuery);
+
+            // if ($validationResult) {
+            //     if ($validationResult->num_rows > 0) {
+            //         // User already has a shopping cart
+            //         $line = $validationResult->fetch_assoc();
+            //         $cartID = $line['CART_ID'];
+            //     } else {
+                    // Insert a new shopping cart
+                    $yes = 1;
+                    $createCartQuery = "INSERT INTO shoppingcarts (USER_ID, TotalAmount, IsCheckedOut) VALUES ('$userId', '$totalPrice', '$yes')";
+
+                    if ($conn->query($createCartQuery) === TRUE) {
+                        // Retrieve the ID of the newly inserted shopping cart
+                        $cartID = $conn->insert_id;
+
+
+
+                        foreach($_SESSION['cart'] as $sku => $quantity) {
+                            // Storing SKU and quantity in local variables
+                            $productSKU = $sku;
+                            $productQuantity = $quantity;
+                        
+                            // Insert product details into database
+                            $insertSql = "INSERT INTO cartitems (CART_ID, SKU, QUANTITY) VALUES (?, ?, ?)";
+                            $insertStmt = $conn->prepare($insertSql);
+                            $insertStmt->bind_param("isi", $cartID, $productSKU, $productQuantity); 
+                            $insertStmt->execute();
+                            $insertStmt->close();
+                        }
+
+
+                    } else {
+                        // Error creating the shopping cart
+                        echo "Error creating shopping cart: " . $conn->error;
+                    }
+                // }
+            } else {
+                // Error executing the validation query
+                echo "Error executing validation query: " . $conn->error;
+            }
+
+
                 if ($result) {
                     // Fetch the data and assign it to variables
                     if ($result->num_rows > 0) {
@@ -216,6 +260,26 @@ $conn->close();
                         $USER_ID = $row['USER_ID']; // This assignment seems redundant
                         $expirationYear = $row['ExpirationYear'];
                         $cvv = $row['CVV'];
+
+
+                        $transactionDate = date('Y-m-d');
+
+                        $createTransactionsQuery = "INSERT INTO transactions (CART_ID, TransactionDate, CardNumber) VALUES ('$cartID', '$transactionDate', '$cardNumber')";
+
+                        if ($conn->query($createTransactionsQuery) === TRUE) 
+                        {
+                            echo "Transaction recorded successfully.";
+                        } 
+                        else 
+                        {
+                            // Error inserting transaction
+                            echo "Error inserting transaction: " . $conn->error;
+                        }
+
+                        
+                            
+
+
                     } else {
                         //If  User does not have a saved credit card
                         $cardNumber = null;
@@ -234,9 +298,9 @@ $conn->close();
                 } else {
                     echo "Error: " . $conn->error;
                 }
-            } else {
-                echo "Error: " . $conn->error;
-            }
+            // } else {
+            //     echo "Error: " . $conn->error;
+            // }
 
             // Close the database connection
             $conn->close();

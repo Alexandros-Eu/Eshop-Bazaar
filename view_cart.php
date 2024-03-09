@@ -1,7 +1,10 @@
 <?php
+
+$totalPrice = 0;
+
 if(isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
     // Initialize total price
-    $totalPrice = 0;
+    
 
     $mysqli = new mysqli("localhost", "root", "", "e-shop");
 
@@ -52,12 +55,18 @@ if(isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
 
     // Display total price
     echo '<div class="total-price">';
-    echo '<h3>Total Price: ' . $totalPrice . '€</h3>';
+    echo '<h3>Total Price: ' . globalTotalPrice() . '€</h3>';
     echo '</div>';
 
     // Close database connection
     $mysqli->close();
 } else {
     echo "Your cart is empty.";
+}
+
+function globalTotalPrice()
+{
+    global $totalPrice;
+    return $totalPrice;
 }
 ?>
