@@ -166,150 +166,115 @@ $conn->close();
     </div>
 </footer>
 
-<!-- JavaScript for Checkout Validation -->
+<!-- JavaScript -->
 <script>
     document.getElementById('checkout').addEventListener('click', function(event) {
         <?php
-        // Check if the user is logged in
-        if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-            // If the user is not logged in, prevent checkout and redirect to login page
-            echo "event.preventDefault();";
-            echo "alert('You need to be logged in to proceed to checkout.');";
-            echo "window.location.href = 'login.php';";
-        } 
-        else 
-        {
-            // If the user is logged in, check if they have a saved credit card
+        // Check if the cart session variable is set and not empty
+        if(isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+            // Check if the user is logged in
+            if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+                // If the user is not logged in, prevent checkout and redirect to login page
+                echo "event.preventDefault();";
+                echo "alert('You need to be logged in to proceed to checkout.');";
+                echo "window.location.href = 'login.php';";
+            } 
+            else 
+            {
+                // If the user is logged in, check if they have a saved credit card
 
-            // Make sure the database connection is established and valid
-            $servername = "localhost";
-            $username = "root";
-            $password = "";
-            $dbname = "e-shop";
+                $servername = "localhost";
+                $username = "root";
+                $password = "";
+                $dbname = "e-shop";
 
-            $conn = new mysqli($servername, $username, $password, $dbname);
-            if ($conn->connect_error) {
-                die("Connection failed: " . $conn->connect_error);
-            }
-
-            // Retrieve user ID
-            $UserNamequery = "SELECT USER_ID FROM customer WHERE USERNAME = '" . $_SESSION['username'] . "'";
-            $UserNameresult = $conn->query($UserNamequery);
-
-            if ($UserNameresult) {
-                $UserNamerow = $UserNameresult->fetch_assoc();
-                $userId = $UserNamerow['USER_ID'];
-
-                // Query to fetch credit card details for the user
-                $query = "SELECT CardNumber, ExpirationMonth, ExpirationYear, CVV FROM creditcarddetails WHERE USER_ID = $userId";
-                $result = $conn->query($query);
-
-            // // Check if the user has a shopping cart
-            // $cartValidationQuery = "SELECT CART_ID FROM shoppingcarts WHERE USER_ID = $userId";
-            // $validationResult = $conn->query($cartValidationQuery);
-
-            // if ($validationResult) {
-            //     if ($validationResult->num_rows > 0) {
-            //         // User already has a shopping cart
-            //         $line = $validationResult->fetch_assoc();
-            //         $cartID = $line['CART_ID'];
-            //     } else {
-                    // Insert a new shopping cart
-                    $yes = 1;
-                    $createCartQuery = "INSERT INTO shoppingcarts (USER_ID, TotalAmount, IsCheckedOut) VALUES ('$userId', '$totalPrice', '$yes')";
-
-                    if ($conn->query($createCartQuery) === TRUE) {
-                        // Retrieve the ID of the newly inserted shopping cart
-                        $cartID = $conn->insert_id;
-
-
-
-                        foreach($_SESSION['cart'] as $sku => $quantity) {
-                            // Storing SKU and quantity in local variables
-                            $productSKU = $sku;
-                            $productQuantity = $quantity;
-                        
-                            // Insert product details into database
-                            $insertSql = "INSERT INTO cartitems (CART_ID, SKU, QUANTITY) VALUES (?, ?, ?)";
-                            $insertStmt = $conn->prepare($insertSql);
-                            $insertStmt->bind_param("isi", $cartID, $productSKU, $productQuantity); 
-                            $insertStmt->execute();
-                            $insertStmt->close();
-                        }
-
-
-                    } else {
-                        // Error creating the shopping cart
-                        echo "Error creating shopping cart: " . $conn->error;
-                    }
-                // }
-            } else {
-                // Error executing the validation query
-                echo "Error executing validation query: " . $conn->error;
-            }
-
-
-                if ($result) {
-                    // Fetch the data and assign it to variables
-                    if ($result->num_rows > 0) {
-                        //If user has a saved credit card
-                        $row = $result->fetch_assoc();
-
-                        $cardNumber = $row['CardNumber'];
-                        $expirationMonth = $row['ExpirationMonth'];
-                        $USER_ID = $row['USER_ID']; // This assignment seems redundant
-                        $expirationYear = $row['ExpirationYear'];
-                        $cvv = $row['CVV'];
-
-
-                        $transactionDate = date('Y-m-d');
-
-                        $createTransactionsQuery = "INSERT INTO transactions (CART_ID, TransactionDate, CardNumber) VALUES ('$cartID', '$transactionDate', '$cardNumber')";
-
-                        if ($conn->query($createTransactionsQuery) === TRUE) 
-                        {
-                            echo "Transaction recorded successfully.";
-                        } 
-                        else 
-                        {
-                            // Error inserting transaction
-                            echo "Error inserting transaction: " . $conn->error;
-                        }
-
-                        
-                            
-
-
-                    } else {
-                        //If  User does not have a saved credit card
-                        $cardNumber = null;
-                        $expirationMonth = null;
-                        $expirationYear = null;
-                        $cvv = null;
-                    }
-
-                    // If the user does not have a credit card saved
-                    if ($cardNumber == null || $cardNumber == 0) {
-                        // User has not saved a complete set of credit card details, prevent checkout and display message
-                        echo "event.preventDefault();";
-                        echo "alert('You need to save a card or already have a saved card in order to proceed to the checkout');";
-                        echo "window.location.href = 'cart.php';";
-                    }
-                } else {
-                    echo "Error: " . $conn->error;
+                $conn = new mysqli($servername, $username, $password, $dbname);
+                if ($conn->connect_error) {
+                    die("Connection failed: " . $conn->connect_error);
                 }
-            // } else {
-            //     echo "Error: " . $conn->error;
-            // }
 
-            // Close the database connection
-            $conn->close();
+                // Retrieve user ID
+                $UserNamequery = "SELECT USER_ID FROM customer WHERE USERNAME = '" . $_SESSION['username'] . "'";
+                $UserNameresult = $conn->query($UserNamequery);
+
+                if ($UserNameresult) {
+                    $UserNamerow = $UserNameresult->fetch_assoc();
+                    $userId = $UserNamerow['USER_ID'];
+
+                    // Query to fetch credit card details for the user
+                    $query = "SELECT CardNumber, ExpirationMonth, ExpirationYear, CVV FROM creditcarddetails WHERE USER_ID = $userId";
+                    $result = $conn->query($query);
+
+                        $yes = 1;
+                        $createCartQuery = "INSERT INTO shoppingcarts (USER_ID, TotalAmount, IsCheckedOut) VALUES ('$userId', '$totalPrice', '$yes')";
+
+                        if ($conn->query($createCartQuery) === TRUE) {
+                            // Retrieve the ID of the newly inserted shopping cart
+                            $cartID = $conn->insert_id;
+
+
+
+                            foreach($_SESSION['cart'] as $sku => $quantity) {
+                                // Storing SKU and quantity in local variables
+                                $productSKU = $sku;
+                                $productQuantity = $quantity;
+                            
+                                // Insert product details into database
+                                $insertSql = "INSERT INTO cartitems (CART_ID, SKU, QUANTITY) VALUES (?, ?, ?)";
+                                $insertStmt = $conn->prepare($insertSql);
+                                $insertStmt->bind_param("isi", $cartID, $productSKU, $productQuantity); 
+                                $insertStmt->execute();
+                                $insertStmt->close();
+                            }
+
+                        } else {
+                            // Error creating the shopping cart
+                            echo "Error creating shopping cart: " . $conn->error;
+                        }
+                } else {
+                    // Error executing the validation query
+                    echo "Error executing validation query: " . $conn->error;
+                }
+
+
+                    if ($result) {
+                        // Fetch the data and assign it to variables
+                        if ($result->num_rows > 0) {
+                            //If user has a saved credit card
+                            $row = $result->fetch_assoc();
+
+                            $cardNumber = $row['CardNumber'];
+                            $expirationMonth = $row['ExpirationMonth'];
+                            $USER_ID = $row['USER_ID']; // This assignment seems redundant
+                            $expirationYear = $row['ExpirationYear'];
+                            $cvv = $row['CVV'];
+
+                        } else {
+                            //If  User does not have a saved credit card
+                            $cardNumber = null;
+                            $expirationMonth = null;
+                            $expirationYear = null;
+                            $cvv = null;
+                        }
+
+                        // If the user does not have a credit card saved
+                        if ($cardNumber == null || $cardNumber == 0) {
+                            // User has not saved a complete set of credit card details, prevent checkout and display message
+                            echo "event.preventDefault();";
+                            echo "alert('You need to save a card or already have a saved card in order to proceed to the checkout');";
+                            echo "window.location.href = 'cart.php';";
+                        }
+                    } else {
+                        echo "Error: " . $conn->error;
+                    }
+
+                $conn->close();
+            }
         }
+        
         ?>
     });
 </script>
-
-
 
 
 </body>

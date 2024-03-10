@@ -99,21 +99,18 @@
                     <h3 class="product-title">Brown Suede Boots</h3>
                     <p class="product-description">Rugged but stylish brown suede boots.</p>
                     <p class="product-price">140.00€</p>
-                    <button class="addtocartbutton">Add to cart</button>
                 </div>
                 <div class="product-card">
                     <img src="images/blueheels.jpg" alt="Blue Heels" />
                     <h3 class="product-title">Blue Heels</h3>
                     <p class="product-description">Blue heels with flower print.</p>
                     <p class="product-price">90.00€</p>
-                    <button class="addtocartbutton">Add to cart</button>
                 </div>
                 <div class="product-card">
                     <img src="images/trainerspink.jpg" alt="Pink Trainers" />
                     <h3 class="product-title">Women's Trainers</h3>
                     <p class="product-description">Stylish women's trainers in Pink.</p>
                     <p class="product-price">75.00€</p>
-                    <button class="addtocartbutton">Add to cart</button>
                 </div>
             </div>
             <button id="mid-sec-btn" onclick="window.location.href='shop.php'">View More</button>
